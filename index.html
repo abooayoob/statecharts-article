@@ -3,9 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="prism.css" />
-    <script type="module" crossorigin src="reacttodobuild.js"></script>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/prism.css" />
     <title>Statecharts</title>
   </head>
   <body class="wrapper py-4 px-4 bg-neutral-50 dark:bg-neutral-800">
@@ -112,7 +111,7 @@
           <code class="language-tsx line-numbers">
             import { useEffect, useState } from "react";
             import { dbApi } from "./api";
-
+            
             function App() {
               const [todos, setTodos] = useState&lt;string[]>([]);
               const [loadingTodos, setLoadingTodos] = useState(false);
@@ -122,7 +121,7 @@
               const [savingTodo, setSavingTodo] = useState(false);
               const [deletingToDo, setDeletingToDo] = useState("");
               const [errorMessage, setErrorMessage] = useState("");
-
+              
               useEffect(() => {
                 if (refreshTodos) {
                   setLoadingTodos(true);
@@ -134,7 +133,7 @@
                   });
                 }
               }, [refreshTodos]);
-
+              
               useEffect(() => {
                 const timeOutId = setTimeout(() => {
                   if (errorMessage) {
@@ -144,7 +143,7 @@
                     }
                   }
                 }, 3000);
-
+                
                 return () => {
                   clearTimeout(timeOutId);
                 };
@@ -152,24 +151,24 @@
 
               return (
                 &lt;div>
-                  {loadingTodos &amp;&amp; &lt;p>Loading...&lt;/p>}
-
-                  {errorMessage &amp;&amp; (
-                    &lt;div>
-                      &lt;p style={{ color: "red" }}>{errorMessage}&lt;/p>
-                      &lt;button
-                        onClick={() => {
-                          setErrorMessage("");
-                          if (deletingToDo) {
-                            setDeletingToDo("");
-                          }
-                        }}
-                      >
-                        Back to list
-                      &lt;/button>
-                    &lt;/div>
+                {loadingTodos &amp;&amp; &lt;p>Loading...&lt;/p>}
+                
+                {errorMessage &amp;&amp; (
+                  &lt;div>
+                  &lt;p style={{ color: "red" }}>{errorMessage}&lt;/p>
+                  &lt;button
+                  onClick={() => {
+                    setErrorMessage("");
+                    if (deletingToDo) {
+                      setDeletingToDo("");
+                    }
+                  }}
+                  >
+                  Back to list
+                  &lt;/button>
+                  &lt;/div>
                   )}
-
+                  
                   {!creatingNew &amp;&amp; todos.length > 0 &amp;&amp; !loadingTodos &amp;&amp; !errorMessage &amp;&amp; (
                     &lt;>
                       &lt;button
@@ -177,74 +176,74 @@
                         onClick={() => {
                           setCreatingNew(true);
                         }}
-                      >
+                        >
                         Create New
-                      &lt;/button>
-                      &lt;ul>
+                        &lt;/button>
+                        &lt;ul>
                         {todos.map((todo) => (
                           &lt;li key={todo}>
-                            &lt;p>
-                              {todo}{" "}
-                              {deletingToDo === todo ? (
-                                "Deleting..."
-                              ) : (
-                                &lt;button
-                                  onClick={() => {
-                                    setDeletingToDo(todo);
-                                    dbApi
-                                      .deleteTodo(todo)
-                                      .then((result) => {
-                                        clearTimeout(result.timeoutId);
-                                        setRefreshTodos(true);
-                                        setDeletingToDo("");
-                                      })
-                                      .catch((reason) => {
-                                        setErrorMessage(reason.message);
-                                      });
-                                  }}
-                                >
+                          &lt;p>
+                          {todo}{" "}
+                          {deletingToDo === todo ? (
+                            "Deleting..."
+                            ) : (
+                              &lt;button
+                              onClick={() => {
+                                setDeletingToDo(todo);
+                                dbApi
+                                .deleteTodo(todo)
+                                .then((result) => {
+                                  clearTimeout(result.timeoutId);
+                                  setRefreshTodos(true);
+                                  setDeletingToDo("");
+                                })
+                                .catch((reason) => {
+                                  setErrorMessage(reason.message);
+                                });
+                              }}
+                              >
                                   delete
                                 &lt;/button>
-                              )}
-                            &lt;/p>
-                          &lt;/li>
-                        ))}
-                      &lt;/ul>
-                    &lt;/>
-                  )}
-
-                  {(creatingNew || todos.length === 0) &amp;&amp; !loadingTodos &amp;&amp; (
+                                )}
+                                &lt;/p>
+                                &lt;/li>
+                                ))}
+                                &lt;/ul>
+                                &lt;/>
+                                )}
+                                
+                                {(creatingNew || todos.length === 0) &amp;&amp; !loadingTodos &amp;&amp; (
                     &lt;>
                       &lt;p>Create a new todo:&lt;/p>
                       &lt;form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          setSavingTodo(true);
-                          dbApi.addTodo(todo).then((result) => {
-                            setTodo("");
-                            setCreatingNew(false);
-                            clearTimeout(result.timeoutId);
-                            setRefreshTodos(true);
-                            setSavingTodo(false);
-                          });
-                        }}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setSavingTodo(true);
+                        dbApi.addTodo(todo).then((result) => {
+                          setTodo("");
+                          setCreatingNew(false);
+                          clearTimeout(result.timeoutId);
+                          setRefreshTodos(true);
+                          setSavingTodo(false);
+                        });
+                      }}
                       >
-                        {savingTodo ? (
-                          &lt;p>Saving...&lt;/p>
+                      {savingTodo ? (
+                        &lt;p>Saving...&lt;/p>
                         ) : (
                           &lt;input
-                            autoFocus
-                            onChange={(e) => {
-                              setTodo(e.target.value);
-                            }}
+                          autoFocus
+                          onChange={(e) => {
+                            setTodo(e.target.value);
+                          }}
                           >&lt;/input>
-                        )}
-                      &lt;/form>
-                    &lt;/>
-                  )}
-                &lt;/div>
-              );
-            }
+                          )}
+                          &lt;/form>
+                          &lt;/>
+                          )}
+                          &lt;/div>
+                          );
+                        }
 
             export default App;
           </code>
@@ -259,10 +258,10 @@
           >
           <h4>Implicit states:</h4>
           <pre>
-                <code class="language-tsx">
-                  {!creatingNew &amp;&amp; todos.length > 0 &amp;&amp; !loadingTodos &amp;&amp; !errorMessage &amp;&amp; (
-                </code>
-              </pre>
+            <code class="language-tsx">
+              {!creatingNew &amp;&amp; todos.length > 0 &amp;&amp; !loadingTodos &amp;&amp; !errorMessage &amp;&amp; (
+              </code>
+            </pre>
           <p>
             In a larger application where variables/props/data come from
             dispirate parts of your application, this can be a nightmare to
@@ -272,41 +271,41 @@
           <h4>App logic spread out and split up throughout the component:</h4>
           <p>In event handlers:</p>
           <pre>
-                <code class="language-tsx">
-                  onClick={() => {
-                    setDeletingToDo(todo);
-                    dbApi
-                      .deleteTodo(todo)
-                      .then((result) => {
-                        clearTimeout(result.timeoutId);
-                        setRefreshTodos(true);
-                        setDeletingToDo("");
-                      })
-                      .catch((reason) => {
-                        setErrorMessage(reason.message);
-                      });
-                  }}
-                </code>
-              </pre>
+              <code class="language-tsx">
+                onClick={() => {
+                  setDeletingToDo(todo);
+                  dbApi
+                  .deleteTodo(todo)
+                  .then((result) => {
+                    clearTimeout(result.timeoutId);
+                    setRefreshTodos(true);
+                    setDeletingToDo("");
+                  })
+                  .catch((reason) => {
+                    setErrorMessage(reason.message);
+                  });
+                }}
+              </code>
+            </pre>
           <p>And useEffects (which are bug prone):</p>
           <pre>
-                <code class="language-tsx">
-                  useEffect(() => {
-                    const timeOutId = setTimeout(() => {
-                      if (errorMessage) {
-                        setErrorMessage("");
-                        if (deletingToDo) {
-                          setDeletingToDo("");
-                        }
-                      }
-                    }, 3000);
+            <code class="language-tsx">
+              useEffect(() => {
+                const timeOutId = setTimeout(() => {
+                  if (errorMessage) {
+                    setErrorMessage("");
+                    if (deletingToDo) {
+                      setDeletingToDo("");
+                    }
+                  }
+                }, 3000);
                 
-                    return () => {
-                      clearTimeout(timeOutId);
-                    };
-                  }, [errorMessage]);
-                </code>
-              </pre>
+                return () => {
+                  clearTimeout(timeOutId);
+                };
+              }, [errorMessage]);
+            </code>
+          </pre>
 
           <h4>Our UI is tightly coupled with our App logic.</h4>
           <p>This hurts portability, making it hard to:</p>
@@ -329,70 +328,70 @@
 
             function App() {
               const [state, send] = useMachine(todosMachine);
-
+              
               return (
                 &lt;>
-                  &lt;div>
-                    {state.matches("Loading Todos") &amp;&amp; &lt;p>Loading...&lt;/p>}
-
-                    {state.matches("Show Todos") &amp;&amp; (
-                      &lt;>
+                &lt;div>
+                {state.matches("Loading Todos") &amp;&amp; &lt;p>Loading...&lt;/p>}
+                
+                {state.matches("Show Todos") &amp;&amp; (
+                  &lt;>
+                  &lt;button
+                  autoFocus
+                  onClick={() => {
+                    send({ type: "Create new todo" });
+                  }}
+                  >
+                  Create New
+                  &lt;/button>
+                  &lt;ul>
+                  {state.context.todos.map((todo) => (
+                    &lt;li key={todo}>
+                    &lt;p>
+                    {todo}{" "}
+                    {state.matches("Show Todos.Deleting todo") ? (
+                      "Deleting..."
+                      ) : (
                         &lt;button
-                          autoFocus
-                          onClick={() => {
-                            send({ type: "Create new todo" });
-                          }}
+                        onClick={() =>
+                          send({ type: "Delete todo", value: todo })
+                        }
                         >
-                          Create New
+                        delete
                         &lt;/button>
-                        &lt;ul>
-                          {state.context.todos.map((todo) => (
-                            &lt;li key={todo}>
-                              &lt;p>
-                                {todo}{" "}
-                                {state.matches("Show Todos.Deleting todo") ? (
-                                  "Deleting..."
-                                ) : (
-                                  &lt;button
-                                    onClick={() =>
-                                      send({ type: "Delete todo", value: todo })
-                                    }
-                                  >
-                                    delete
-                                  &lt;/button>
-                                )}
-                              &lt;/p>
-                            &lt;/li>
-                          ))}
+                        )}
+                        &lt;/p>
+                        &lt;/li>
+                        ))}
                         &lt;/ul>
-                      &lt;/>
-                    )}
-
-                    {(state.matches("Deleting todo errored") ||
-                      state.matches("Creating new todo.Saving todo errored")) &amp;&amp; (
-                      &lt;div>
-                        &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
-                        &lt;button
+                        &lt;/>
+                        )}
+                        
+                        {(state.matches("Deleting todo errored") ||
+                        state.matches("Creating new todo.Saving todo errored")) &amp;&amp; (
+                          &lt;div>
+                          &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
+                          &lt;button
                           onClick={() => {
                             send({ type: "Back" });
                           }}
-                        >
+                          >
                           Back
-                        &lt;/button>
-                      &lt;/div>
-                    )}
-
-                    {state.matches("Creating new todo") &amp;&amp;
-                      !state.matches("Creating new todo.Saving todo errored") &amp;&amp; (
-                        &lt;>
+                          &lt;/button>
+                          &lt;/div>
+                          )}
+                          
+                          {state.matches("Creating new todo") &amp;&amp;
+                          !state.matches("Creating new todo.Saving todo errored") &amp;&amp; (
+                            &lt;>
                           &lt;p>Create a new todo:&lt;/p>
-
+                          
                           {state.matches("Creating new todo.Saving todo") &amp;&amp; (
                             &lt;p>Saving...&lt;/p>
-                          )}
-
-                          {state.matches("Creating new todo.Showing form input") &amp;&amp; (
-                            &lt;form
+                            )}
+                            
+                            {state.matches("Creating new todo.Showing form input") &amp;&amp; (
+                              &lt;form
                               onSubmit={(e) => {
                                 e.preventDefault();
                                 send({ type: "Submit" });
@@ -406,14 +405,14 @@
                                     value: e.target.value,
                                   });
                                 }}
-                              >&lt;/input>
-                            &lt;/form>
-                          )}
-                        &lt;/>
-                      )}
+                                >&lt;/input>
+                                &lt;/form>
+                                )}
+                                &lt;/>
+                                )}
                   &lt;/div>
-                &lt;/>
-              );
+                  &lt;/>
+                  );
             }
 
             export default App;
@@ -430,20 +429,20 @@
           >
           <h4>Explicit states</h4>
           <pre>
-                <code class="language-tsx">
-                  {state.matches("Show Todos") && (
-                </code>
-              </pre>
+            <code class="language-tsx">
+              {state.matches("Show Todos") && (
+              </code>
+            </pre>
           <p>Yeah... No guessing what state our application is in.</p>
 
           <h4>No App logic in our components, and no useEffects!</h4>
           <pre>
-                <code class="language-tsx">
-                  onClick={() =>
-                    send({ type: "Delete todo", value: todo })
-                  }
-                </code>
-              </pre>
+              <code class="language-tsx">
+                onClick={() =>
+                  send({ type: "Delete todo", value: todo })
+                }
+              </code>
+            </pre>
           <p>
             We just send an event and any relevant data to a centralized place
             that holds and exceutes our logic.
@@ -517,36 +516,36 @@
         <code class="language-tsx line-numbers">
           import { createMachine, assign } from "xstate";
           import { dbApi } from "./api";
-
+          
           export const todosMachine =
-            /** @xstate-layout N4IgpgJg5mDOIC5QBUD2FWwAQFkCGAxgBYCWAdmAHQAyqeE5UWaGsAxBhZeQG6oDWVFplyFSXWvUbN0mBL1QE8AFxKoyAbQAMAXW07EoAA6YSq9YZAAPRACYAnADZKtrQFYAjB4DMjgBwA7A4etgA0IACeiL62lFq23t4BAfaeAQAsIQC+WeHC2PjE5FSSDGRM+RzqVAqClPmiRRJ0ZRWysPJkfErmmroaHgZIICawZmpkljYIjgmUGfYJjgG+Wn5e4VEISR4uDumOHvYBHm4pfuk5ee2N4iUt0pVgAE7PqM+URgA2KgBm7wBbeo3Qp3GgPcoyVidboqCb6fSWUbjCzDaZuRaUM4eLQ4+zrdwBTaIDyOLSUQLpQmZRzpQLZXIgBqg4qUADKRFQAHcoZg2ABhZ5gFRgLAUHnKWSI4bI3pTElU8lnPyePwJXEePzeYkzTUuOkeKkY+LedKXRnMsSsjnc3mwSgAETAXzAqkhkowVS4tSEIKtXBtPPyjudrukHtQMMUcPUCN0SNMcrRdi05Mc3lsbjcmS0mSOfh12bcFLc3icfnsxzNZquTL9TSogbtIZdbqYEbYLzeH2+f0BwNYt2tnKD7RbYfdsijPXh-XjMsTE3lCBW3koqW8pfSmdxdMcOuSAUo3lOTniAVTiQ8tctDfZI+bJAgLrYTtbooj0uMi9RoGm62LDFHCcVw1UpbVIkQWZ0jiM0tGA-wkkOa8LXrMFBWFNsxTACVZHvblpH+Z4ASwcgjAAV2UNgADFAVIsgKOULBiDwcpIC-EYf0mZMEGOew4lcEJ7DWZC3B1Ww1XXPxpPSVIKxPLUbzQ1kMLhSFxSwCN8K5Qi6LIyi2DZciACMATMDjZSXHjDVNdcqT3Tw3HcUkdUSZxjm8Px3FNLyzkcJTBxZLhVKwjStLZPAeHDWQvRqLoBF9QL-SoELpDCvCIqiycMGnGM+j0edvzGJM-xJU0j3WFVHEcJzbG3CCtgAWjcZwjkybwtHsDrhL8Gr-NQpK71S9ScM0jLIuiz0u3eT4fmUIigVvdChTUph0owdkJuyyMFBnWM5yGIqUW40qEB8bdKC8dI3FsWxkgkolILOrN5mAisauk3yApEIKqDfCd21kLBpqFCA2AAIUIfgLK45dM2LexrsSM0EKOG6dWWNc7t8zNbFOarvoKZLxywiNgded5IDYKxYGUEVKDwX5lBeAAKDrUwASjYJbWX+0mgZB9jCs44qrNOnyKS0AJkKcMsggLJ6gn4rNhNOI4TmSfrrkG5bMLS0bwq2wGMHJ7sqZpunmYZpnWfZrQuZ54KVtCg3xqy43UFNymIBh0Xf2sEkfH4rQOruuraQ8IIdTV49cz4iT0ySO7CaHJ29ZG3CNsyybPcFsHIYIaHhcs-3phxDE4gvLNZk83r7APfjM3SE9hNus0HACHJGTIdA4EsR2wATP2ToD57YnTeGczzfEdUamzKGWfE1mEzxhNzFPfvBKRIXyIfjuXDNdmlk5kd6lJMnSHUDkrqkcTNHxbsUgafuJptd4XYflxqtd4NmaSNYSJqQs8E4jxBanjYS254jmm1i-O8b8xx8xznvEqo8vB1XXJqNU6QUhrFsNVQsXVKB0jVGWJyUsbqd2fkTeBD5gxPhdCgsWo8Ly7F-hJekQQFIY2viqVMKx7LrAcBvYmpQc7YDzkw0uUE9QnGWA4aqeJDjiWOC4C4nkki+E3O1ERQ1nb60zqgKRI9phdTYYJBwIkvBiSeo1PwLgTybgrKqTyVJbC6N1qtbChjtK6WIvRRixjlxeFTAvZUQQgjZmUU9PGa5nG5juldTw10PEqX0RnMaWcjaZKMR-fe1kyRHl8JHLqElCROHEqSWCuZTgawvCsLWdYda81DPzE2ki8moOmPg5wiEem3RavEBWWxzhYnxE5C4ARq6zFSWnLx61UCbXdjkr2oMgnWQSEeDIFZm4nhsjghuLhswt3iHVbcxwu5ZCAA */
-            createMachine(
-              {
-                context: {
-                  todos: [] as string[],
-                  errorMessage: undefined as string | undefined,
-                  createNewTodoFormInput: "",
-                  todoToDelete: "",
+          /** @xstate-layout N4IgpgJg5mDOIC5QBUD2FWwAQFkCGAxgBYCWAdmAHQAyqeE5UWaGsAxBhZeQG6oDWVFplyFSXWvUbN0mBL1QE8AFxKoyAbQAMAXW07EoAA6YSq9YZAAPRACYAnADZKtrQFYAjB4DMjgBwA7A4etgA0IACeiL62lFq23t4BAfaeAQAsIQC+WeHC2PjE5FSSDGRM+RzqVAqClPmiRRJ0ZRWysPJkfErmmroaHgZIICawZmpkljYIjgmUGfYJjgG+Wn5e4VEISR4uDumOHvYBHm4pfuk5ee2N4iUt0pVgAE7PqM+URgA2KgBm7wBbeo3Qp3GgPcoyVidboqCb6fSWUbjCzDaZuRaUM4eLQ4+zrdwBTaIDyOLSUQLpQmZRzpQLZXIgBqg4qUADKRFQAHcoZg2ABhZ5gFRgLAUHnKWSI4bI3pTElU8lnPyePwJXEePzeYkzTUuOkeKkY+LedKXRnMsSsjnc3mwSgAETAXzAqkhkowVS4tSEIKtXBtPPyjudrukHtQMMUcPUCN0SNMcrRdi05Mc3lsbjcmS0mSOfh12bcFLc3icfnsxzNZquTL9TSogbtIZdbqYEbYLzeH2+f0BwNYt2tnKD7RbYfdsijPXh-XjMsTE3lCBW3koqW8pfSmdxdMcOuSAUo3lOTniAVTiQ8tctDfZI+bJAgLrYTtbooj0uMi9RoGm62LDFHCcVw1UpbVIkQWZ0jiM0tGA-wkkOa8LXrMFBWFNsxTACVZHvblpH+Z4ASwcgjAAV2UNgADFAVIsgKOULBiDwcpIC-EYf0mZMEGOew4lcEJ7DWZC3B1Ww1XXPxpPSVIKxPLUbzQ1kMLhSFxSwCN8K5Qi6LIyi2DZciACMATMDjZSXHjDVNdcqT3Tw3HcUkdUSZxjm8Px3FNLyzkcJTBxZLhVKwjStLZPAeHDWQvRqLoBF9QL-SoELpDCvCIqiycMGnGM+j0edvzGJM-xJU0j3WFVHEcJzbG3CCtgAWjcZwjkybwtHsDrhL8Gr-NQpK71S9ScM0jLIuiz0u3eT4fmUIigVvdChTUph0owdkJuyyMFBnWM5yGIqUW40qEB8bdKC8dI3FsWxkgkolILOrN5mAisauk3yApEIKqDfCd21kLBpqFCA2AAIUIfgLK45dM2LexrsSM0EKOG6dWWNc7t8zNbFOarvoKZLxywiNgded5IDYKxYGUEVKDwX5lBeAAKDrUwASjYJbWX+0mgZB9jCs44qrNOnyKS0AJkKcMsggLJ6gn4rNhNOI4TmSfrrkG5bMLS0bwq2wGMHJ7sqZpunmYZpnWfZrQuZ54KVtCg3xqy43UFNymIBh0Xf2sEkfH4rQOruuraQ8IIdTV49cz4iT0ySO7CaHJ29ZG3CNsyybPcFsHIYIaHhcs-3phxDE4gvLNZk83r7APfjM3SE9hNus0HACHJGTIdA4EsR2wATP2ToD57YnTeGczzfEdUamzKGWfE1mEzxhNzFPfvBKRIXyIfjuXDNdmlk5kd6lJMnSHUDkrqkcTNHxbsUgafuJptd4XYflxqtd4NmaSNYSJqQs8E4jxBanjYS254jmm1i-O8b8xx8xznvEqo8vB1XXJqNU6QUhrFsNVQsXVKB0jVGWJyUsbqd2fkTeBD5gxPhdCgsWo8Ly7F-hJekQQFIY2viqVMKx7LrAcBvYmpQc7YDzkw0uUE9QnGWA4aqeJDjiWOC4C4nkki+E3O1ERQ1nb60zqgKRI9phdTYYJBwIkvBiSeo1PwLgTybgrKqTyVJbC6N1qtbChjtK6WIvRRixjlxeFTAvZUQQgjZmUU9PGa5nG5juldTw10PEqX0RnMaWcjaZKMR-fe1kyRHl8JHLqElCROHEqSWCuZTgawvCsLWdYda81DPzE2ki8moOmPg5wiEem3RavEBWWxzhYnxE5C4ARq6zFSWnLx61UCbXdjkr2oMgnWQSEeDIFZm4nhsjghuLhswt3iHVbcxwu5ZCAA */
+          createMachine(
+            {
+              context: {
+                todos: [] as string[],
+                errorMessage: undefined as string | undefined,
+                createNewTodoFormInput: "",
+                todoToDelete: "",
+              },
+              tsTypes: {} as import("./todoAppMachine.typegen").Typegen0,
+              schema: {
+                events: {} as
+                | { type: "Create new todo" }
+                | { type: "Form input changed"; value: string }
+                | { type: "Submit" }
+                | { type: "Delete todo"; value: string }
+                | { type: "Back" },
+                services: {} as {
+                  loadTodos: {
+                    data: string[];
+                  };
+                  saveTodo: {
+                    data: void;
+                  };
+                  deleteTodo: {
+                    data: void;
+                  };
                 },
-                tsTypes: {} as import("./todoAppMachine.typegen").Typegen0,
-                schema: {
-                  events: {} as
-                    | { type: "Create new todo" }
-                    | { type: "Form input changed"; value: string }
-                    | { type: "Submit" }
-                    | { type: "Delete todo"; value: string }
-                    | { type: "Back" },
-                  services: {} as {
-                    loadTodos: {
-                      data: string[];
-                    };
-                    saveTodo: {
-                      data: void;
-                    };
-                    deleteTodo: {
-                      data: void;
-                    };
-                  },
                 },
                 initial: "Loading Todos",
                 states: {
@@ -554,20 +553,20 @@
                     invoke: {
                       src: "loadTodos",
                       onDone: [
-                        {
-                          target: "Show Todos",
-                          cond: "Has todos",
-                          actions: "assignTodosToContext",
-                        },
-                        {
-                          target: "Creating new todo",
-                        },
+                      {
+                        target: "Show Todos",
+                        cond: "Has todos",
+                        actions: "assignTodosToContext",
+                      },
+                      {
+                        target: "Creating new todo",
+                      },
                       ],
                       onError: [
-                        {
-                          target: "Loading todos errored",
-                          actions: "assignErrorMessageToContext",
-                        },
+                      {
+                        target: "Loading todos errored",
+                        actions: "assignErrorMessageToContext",
+                      },
                       ],
                     },
                   },
@@ -578,7 +577,7 @@
                         target: "Creating new todo",
                       },
                     },
-
+                    
                     states: {
                       "Deleting todo": {
                         invoke: {
@@ -590,7 +589,7 @@
                           },
                         },
                       },
-
+                      
                       idle: {
                         on: {
                           "Delete todo": {
@@ -603,9 +602,9 @@
 
                     initial: "idle",
                   },
-
+                  
                   "Loading todos errored": {},
-
+                  
                   "Creating new todo": {
                     initial: "Showing form input",
                     states: {
@@ -619,14 +618,14 @@
                           },
                         },
                       },
-
+                      
                       "Saving todo": {
                         invoke: {
                           src: "saveTodo",
                           onDone: [
-                            {
-                              target: "#Todos Machine.Loading Todos",
-                            },
+                          {
+                            target: "#Todos Machine.Loading Todos",
+                          },
                           ],
                           onError: {
                             target: "Saving todo errored",
@@ -634,12 +633,12 @@
                           },
                         },
                       },
-
+                      
                       "Saving todo errored": {
                         after: {
                           "3000": "Showing form input",
                         },
-
+                        
                         on: {
                           Back: "Showing form input",
                         },
@@ -698,7 +697,7 @@
                 },
               }
             );
-
+            
         </code>
       </pre>
 
@@ -764,12 +763,12 @@
         <code class="language-tsx">
           {state.matches("Loading todos errored") &amp;&amp; (
             &lt;div>
-              &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
-              &lt;p>Hold on tight, will try again soon.&lt;/p>
+            &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
+            &lt;p>Hold on tight, will try again soon.&lt;/p>
             &lt;/div>
-          )}
-        </code>
-      </pre>
+            )}
+          </code>
+        </pre>
 
       <p>
         This will make the app retry loading the todos, and the UI informs the
@@ -804,14 +803,14 @@
             retries: 0, // we keep track of data in this context object in Xstate
           },
           ...
-
+          
           ...
           guards: {
             ...
             "not max retries": (context, event) => context.retries &lt; 5,
           }
           ...
-
+          
           ...
           actions: {
             "increase retries count": assign((context, event) => ({
@@ -827,18 +826,18 @@
           // App.tsx:
           ...
           {(state.matches("Loading Todos") ||
-            state.matches("Retry loading todos")) &amp;&amp; &lt;p>Loading...&lt;/p>} // Keep loading message if retrying
+          state.matches("Retry loading todos")) &amp;&amp; &lt;p>Loading...&lt;/p>} // Keep loading message if retrying
           ...
-
+          
           ...
           {state.matches("Loading todos errored") &amp;&amp; (
             ...
             &lt;p>Experiencing som issues, please come back later.&lt;/p> 
             ...
-          )} // Change text
-          ...
-        </code>
-      </pre>
+            )} // Change text
+            ...
+          </code>
+        </pre>
 
       <p>On the way we got excellent Typescript support from Xstate:</p>
     </div>
@@ -1252,6 +1251,7 @@
       <p>The company behind Xstate, it's visual editor and online tools.</p>
     </div>
 
-    <script src="prism.js"></script>
+    <script type="module" crossorigin src="/reacttodobuild.js"></script>
+    <script type="module" src="/prism.js"></script>
   </body>
 </html>
