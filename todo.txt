@@ -1,0 +1,9 @@
+- embedded app
+  - remove autofocus on embedded app
+  - api good all the way?
+- fix examples
+  - finalize examples
+  - put up on github
+  - new image
+  - re-embed all code examples
+- emphasize statemachines, statecharts, xstate
