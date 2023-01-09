@@ -114,7 +114,7 @@
           <code class="language-tsx line-numbers">
             import { useEffect, useState } from "react";
             import { dbApi } from "./api";
-            
+
             function App() {
               const [todos, setTodos] = useState&lt;string[]>([]);
               const [loadingTodos, setLoadingTodos] = useState(false);
@@ -124,7 +124,7 @@
               const [savingTodo, setSavingTodo] = useState(false);
               const [deletingToDo, setDeletingToDo] = useState("");
               const [errorMessage, setErrorMessage] = useState("");
-              
+
               useEffect(() => {
                 if (refreshTodos) {
                   setLoadingTodos(true);
@@ -136,7 +136,7 @@
                   });
                 }
               }, [refreshTodos]);
-              
+
               useEffect(() => {
                 const timeOutId = setTimeout(() => {
                   if (errorMessage) {
@@ -146,7 +146,7 @@
                     }
                   }
                 }, 3000);
-                
+
                 return () => {
                   clearTimeout(timeOutId);
                 };
@@ -154,24 +154,24 @@
 
               return (
                 &lt;div>
-                {loadingTodos &amp;&amp; &lt;p>Loading...&lt;/p>}
-                
-                {errorMessage &amp;&amp; (
-                  &lt;div>
-                  &lt;p style={{ color: "red" }}>{errorMessage}&lt;/p>
-                  &lt;button
-                  onClick={() => {
-                    setErrorMessage("");
-                    if (deletingToDo) {
-                      setDeletingToDo("");
-                    }
-                  }}
-                  >
-                  Back to list
-                  &lt;/button>
-                  &lt;/div>
+                  {loadingTodos &amp;&amp; &lt;p>Loading...&lt;/p>}
+
+                  {errorMessage &amp;&amp; (
+                    &lt;div>
+                      &lt;p style={{ color: "red" }}>{errorMessage}&lt;/p>
+                      &lt;button
+                        onClick={() => {
+                          setErrorMessage("");
+                          if (deletingToDo) {
+                            setDeletingToDo("");
+                          }
+                        }}
+                      >
+                        Back to list
+                      &lt;/button>
+                    &lt;/div>
                   )}
-                  
+
                   {!creatingNew &amp;&amp; todos.length > 0 &amp;&amp; !loadingTodos &amp;&amp; !errorMessage &amp;&amp; (
                     &lt;>
                       &lt;button
@@ -179,74 +179,74 @@
                         onClick={() => {
                           setCreatingNew(true);
                         }}
-                        >
+                      >
                         Create New
-                        &lt;/button>
-                        &lt;ul>
+                      &lt;/button>
+                      &lt;ul>
                         {todos.map((todo) => (
                           &lt;li key={todo}>
-                          &lt;p>
-                          {todo}{" "}
-                          {deletingToDo === todo ? (
-                            "Deleting..."
-                            ) : (
-                              &lt;button
-                              onClick={() => {
-                                setDeletingToDo(todo);
-                                dbApi
-                                .deleteTodo(todo)
-                                .then((result) => {
-                                  clearTimeout(result.timeoutId);
-                                  setRefreshTodos(true);
-                                  setDeletingToDo("");
-                                })
-                                .catch((reason) => {
-                                  setErrorMessage(reason.message);
-                                });
-                              }}
-                              >
+                            &lt;p>
+                              {todo}{" "}
+                              {deletingToDo === todo ? (
+                                "Deleting..."
+                              ) : (
+                                &lt;button
+                                  onClick={() => {
+                                    setDeletingToDo(todo);
+                                    dbApi
+                                      .deleteTodo(todo)
+                                      .then((result) => {
+                                        clearTimeout(result.timeoutId);
+                                        setRefreshTodos(true);
+                                        setDeletingToDo("");
+                                      })
+                                      .catch((reason) => {
+                                        setErrorMessage(reason.message);
+                                      });
+                                  }}
+                                >
                                   delete
                                 &lt;/button>
-                                )}
-                                &lt;/p>
-                                &lt;/li>
-                                ))}
-                                &lt;/ul>
-                                &lt;/>
-                                )}
-                                
-                                {(creatingNew || todos.length === 0) &amp;&amp; !loadingTodos &amp;&amp; (
+                              )}
+                            &lt;/p>
+                          &lt;/li>
+                        ))}
+                      &lt;/ul>
+                    &lt;/>
+                  )}
+
+                  {(creatingNew || todos.length === 0) &amp;&amp; !loadingTodos &amp;&amp; (
                     &lt;>
                       &lt;p>Create a new todo:&lt;/p>
                       &lt;form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        setSavingTodo(true);
-                        dbApi.addTodo(todo).then((result) => {
-                          setTodo("");
-                          setCreatingNew(false);
-                          clearTimeout(result.timeoutId);
-                          setRefreshTodos(true);
-                          setSavingTodo(false);
-                        });
-                      }}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          setSavingTodo(true);
+                          dbApi.addTodo(todo).then((result) => {
+                            setTodo("");
+                            setCreatingNew(false);
+                            clearTimeout(result.timeoutId);
+                            setRefreshTodos(true);
+                            setSavingTodo(false);
+                          });
+                        }}
                       >
-                      {savingTodo ? (
-                        &lt;p>Saving...&lt;/p>
+                        {savingTodo ? (
+                          &lt;p>Saving...&lt;/p>
                         ) : (
                           &lt;input
-                          autoFocus
-                          onChange={(e) => {
-                            setTodo(e.target.value);
-                          }}
+                            autoFocus
+                            onChange={(e) => {
+                              setTodo(e.target.value);
+                            }}
                           >&lt;/input>
-                          )}
-                          &lt;/form>
-                          &lt;/>
-                          )}
-                          &lt;/div>
-                          );
-                        }
+                        )}
+                      &lt;/form>
+                    &lt;/>
+                  )}
+                &lt;/div>
+              );
+            }
 
             export default App;
           </code>
@@ -331,70 +331,78 @@
 
             function App() {
               const [state, send] = useMachine(todosMachine);
-              
+
               return (
                 &lt;>
-                &lt;div>
-                {state.matches("Loading Todos") &amp;&amp; &lt;p>Loading...&lt;/p>}
-                
-                {state.matches("Show Todos") &amp;&amp; (
-                  &lt;>
-                  &lt;button
-                  autoFocus
-                  onClick={() => {
-                    send({ type: "Create new todo" });
-                  }}
-                  >
-                  Create New
-                  &lt;/button>
-                  &lt;ul>
-                  {state.context.todos.map((todo) => (
-                    &lt;li key={todo}>
-                    &lt;p>
-                    {todo}{" "}
-                    {state.matches("Show Todos.Deleting todo") ? (
-                      "Deleting..."
-                      ) : (
+                  &lt;div>
+                    {(state.matches("Loading Todos") ||
+                      state.matches("Retry loading todos")) &amp;&amp; &lt;p>Loading...&lt;/p>}
+
+                    {state.matches("Show Todos") &amp;&amp; (
+                      &lt;>
                         &lt;button
-                        onClick={() =>
-                          send({ type: "Delete todo", value: todo })
-                        }
+                          autoFocus
+                          onClick={() => {
+                            send({ type: "Create new todo" });
+                          }}
                         >
-                        delete
+                          Create New
                         &lt;/button>
-                        )}
-                        &lt;/p>
-                        &lt;/li>
-                        ))}
+                        &lt;ul>
+                          {state.context.todos.map((todo) => (
+                            &lt;li key={todo}>
+                              &lt;p>
+                                {todo}{" "}
+                                {state.context.todoToDelete === todo ? (
+                                  "Deleting..."
+                                ) : (
+                                  &lt;button
+                                    onClick={() =>
+                                      send({ type: "Delete todo", value: todo })
+                                    }
+                                  >
+                                    delete
+                                  &lt;/button>
+                                )}
+                              &lt;/p>
+                            &lt;/li>
+                          ))}
                         &lt;/ul>
-                        &lt;/>
-                        )}
-                        
-                        {(state.matches("Deleting todo errored") ||
-                        state.matches("Creating new todo.Saving todo errored")) &amp;&amp; (
-                          &lt;div>
-                          &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
-                          &lt;button
+                      &lt;/>
+                    )}
+
+                    {(state.matches("Deleting todo errored") ||
+                      state.matches("Creating new todo.Saving todo errored")) &amp;&amp; (
+                      &lt;div>
+                        &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
+                        &lt;button
                           onClick={() => {
                             send({ type: "Back" });
                           }}
-                          >
+                        >
                           Back
-                          &lt;/button>
-                          &lt;/div>
-                          )}
-                          
-                          {state.matches("Creating new todo") &amp;&amp;
-                          !state.matches("Creating new todo.Saving todo errored") &amp;&amp; (
-                            &lt;>
+                        &lt;/button>
+                      &lt;/div>
+                    )}
+
+                    {state.matches("Loading todos errored") &amp;&amp; (
+                      &lt;div>
+                        &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
+                        &lt;p>Experiencing som issues, please come back later.&lt;/p>
+                      &lt;/div>
+                    )}
+
+                    {state.matches("Creating new todo") &amp;&amp;
+                      !state.matches("Creating new todo.Saving todo errored") &amp;&amp; (
+                        &lt;>
                           &lt;p>Create a new todo:&lt;/p>
-                          
+
                           {state.matches("Creating new todo.Saving todo") &amp;&amp; (
                             &lt;p>Saving...&lt;/p>
-                            )}
-                            
-                            {state.matches("Creating new todo.Showing form input") &amp;&amp; (
-                              &lt;form
+                          )}
+
+                          {state.matches("Creating new todo.Showing form input") &amp;&amp; (
+                            &lt;form
                               onSubmit={(e) => {
                                 e.preventDefault();
                                 send({ type: "Submit" });
@@ -408,18 +416,17 @@
                                     value: e.target.value,
                                   });
                                 }}
-                                >&lt;/input>
-                                &lt;/form>
-                                )}
-                                &lt;/>
-                                )}
+                              >&lt;/input>
+                            &lt;/form>
+                          )}
+                        &lt;/>
+                      )}
                   &lt;/div>
-                  &lt;/>
-                  );
+                &lt;/>
+              );
             }
 
             export default App;
-
           </code>
         </pre>
 
