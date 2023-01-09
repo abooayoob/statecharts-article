@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/statecharts-article/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link rel="stylesheet" href="/statecharts-article/prism.css" />
+    <title>Statecharts</title>
+    <script type="module" crossorigin src="/statecharts-article/assets/index-fac82e35.js"></script>
+    <link rel="stylesheet" href="/statecharts-article/assets/index-90026c8d.css">
+  </head>
+  <body class="wrapper py-4 px-4 bg-neutral-50 dark:bg-neutral-800">
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <h1>State Machines, Statecharts & Xstate</h1>
+
+      <p>
+        In this article I would like to introduce and motivate the use of
+        <em>State Machines</em> via &#10141; <em>Statecharts</em> notation,
+        implemented through &#10141; the <em>Xstate</em> library. This is a
+        somewhat developer-centric introduction, but <em>Statecharts</em> is a
+        powerful tool that is of benefit to everyone involved in creation of
+        software: Project Managers, Designers, Clients etc. If you don't code,
+        just skim through the code parts, and hopefully you can still learn
+        something useful :)
+      </p>
+
+      <h2>Xstate can <em>Radically</em> simplify our UI components.</h2>
+
+      <p>Let's dive right into an example:</p>
+
+      <h3>A Simple Todo App</h3>
+
+      <p>
+        Somebody did a Design Sprint, and here is the
+        <strong>Spec Sheet:</strong>
+      </p>
+
+      <ul>
+        <li>Todos can be created or deleted, simple as that.</li>
+        <li>2 main screens</li>
+        <ul>
+          <li>"Main" screen:</li>
+          <ul>
+            <li>Button to create new Todo</li>
+            <li>List Todos</li>
+            <li>Buttons to delete Todos</li>
+          </ul>
+          <li>"Create" screen</li>
+          <ul>
+            <li>Input field for the Todo to be created</li>
+          </ul>
+        </ul>
+        <li>Actually 1 more screen...:</li>
+        <ul>
+          <li>"Error" screen</li>
+          <ul>
+            <li>The Deletion microservice fails alot: Give feedback to user</li>
+            <li>Auto-navigate back to "Main" screen after 3 seconds</li>
+            <li>Back to Todos button for the power users</li>
+          </ul>
+        </ul>
+        <li>
+          Stellar loading messages:
+          <ul>
+            <li>Loading todos...</li>
+            <li>Saving todo...</li>
+            <li>Deleting todo...</li>
+          </ul>
+        </li>
+        <li>Auto-navigate to "Create" screen if no Todos in list</li>
+      </ul>
+
+      <p>
+        I've implemented this in both "vanilla" React and React + Xstate, we
+        will compare and contrast both.
+      </p>
+
+      <h4>You can have a quick play around with one of the results here:</h4>
+    </div>
+
+    <div
+      class="react-todo w-full h-56 not-prose dark:bg-white p-8 rounded-md dark:shadow-neutral-500 shadow-lg mb-8 scroll-auto overflow-auto"
+    >
+      <div id="root"></div>
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <p>
+        Below is the React specific code for both implementations of this
+        example, <em>App.tsx</em>. Please scroll around and compare. I've also
+        provided a link to stackblitz projects, so you can get full insight into
+        them. You can safely hold off checking those out after this article, but
+        choose your own adventure :)
+      </p>
+      <p>
+        <em>Disclaimer:</em> This is a contrived example of course. I encourage
+        you to imagine how this scales in a real world app, with seperate files,
+        components and more features.
+      </p>
+    </div>
+
+    <div class="full-bleed py-8">
+      <div
+        class="mx-auto max-w-7xl lg:grid lg:grid-cols-2 lg:gap-x-4 lg:auto-rows-auto prose prose-neutral dark:prose-invert font-serif prose-headings:font-sans"
+      >
+        <h3 class="lg:mt-8 lg:col-start-1 lg:row-start-1">React</h3>
+
+        <pre class="h-96 not-prose lg:col-start-1 lg:row-start-2">
+          <code class="language-tsx line-numbers">
+            import { useEffect, useState } from "react";
+            import { dbApi } from "./api";
+            
+            function App() {
+              const [todos, setTodos] = useState&lt;string[]>([]);
+              const [loadingTodos, setLoadingTodos] = useState(false);
+              const [refreshTodos, setRefreshTodos] = useState(true);
+              const [todo, setTodo] = useState("");
+              const [creatingNew, setCreatingNew] = useState(false);
+              const [savingTodo, setSavingTodo] = useState(false);
+              const [deletingToDo, setDeletingToDo] = useState("");
+              const [errorMessage, setErrorMessage] = useState("");
+              
+              useEffect(() => {
+                if (refreshTodos) {
+                  setLoadingTodos(true);
+                  dbApi.getTodos().then((result) => {
+                    setTodos(Array.from(result.data));
+                    clearTimeout(result.timeoutId);
+                    setRefreshTodos(false);
+                    setLoadingTodos(false);
+                  });
+                }
+              }, [refreshTodos]);
+              
+              useEffect(() => {
+                const timeOutId = setTimeout(() => {
+                  if (errorMessage) {
+                    setErrorMessage("");
+                    if (deletingToDo) {
+                      setDeletingToDo("");
+                    }
+                  }
+                }, 3000);
+                
+                return () => {
+                  clearTimeout(timeOutId);
+                };
+              }, [errorMessage]);
+
+              return (
+                &lt;div>
+                {loadingTodos &amp;&amp; &lt;p>Loading...&lt;/p>}
+                
+                {errorMessage &amp;&amp; (
+                  &lt;div>
+                  &lt;p style={{ color: "red" }}>{errorMessage}&lt;/p>
+                  &lt;button
+                  onClick={() => {
+                    setErrorMessage("");
+                    if (deletingToDo) {
+                      setDeletingToDo("");
+                    }
+                  }}
+                  >
+                  Back to list
+                  &lt;/button>
+                  &lt;/div>
+                  )}
+                  
+                  {!creatingNew &amp;&amp; todos.length > 0 &amp;&amp; !loadingTodos &amp;&amp; !errorMessage &amp;&amp; (
+                    &lt;>
+                      &lt;button
+                        autoFocus
+                        onClick={() => {
+                          setCreatingNew(true);
+                        }}
+                        >
+                        Create New
+                        &lt;/button>
+                        &lt;ul>
+                        {todos.map((todo) => (
+                          &lt;li key={todo}>
+                          &lt;p>
+                          {todo}{" "}
+                          {deletingToDo === todo ? (
+                            "Deleting..."
+                            ) : (
+                              &lt;button
+                              onClick={() => {
+                                setDeletingToDo(todo);
+                                dbApi
+                                .deleteTodo(todo)
+                                .then((result) => {
+                                  clearTimeout(result.timeoutId);
+                                  setRefreshTodos(true);
+                                  setDeletingToDo("");
+                                })
+                                .catch((reason) => {
+                                  setErrorMessage(reason.message);
+                                });
+                              }}
+                              >
+                                  delete
+                                &lt;/button>
+                                )}
+                                &lt;/p>
+                                &lt;/li>
+                                ))}
+                                &lt;/ul>
+                                &lt;/>
+                                )}
+                                
+                                {(creatingNew || todos.length === 0) &amp;&amp; !loadingTodos &amp;&amp; (
+                    &lt;>
+                      &lt;p>Create a new todo:&lt;/p>
+                      &lt;form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setSavingTodo(true);
+                        dbApi.addTodo(todo).then((result) => {
+                          setTodo("");
+                          setCreatingNew(false);
+                          clearTimeout(result.timeoutId);
+                          setRefreshTodos(true);
+                          setSavingTodo(false);
+                        });
+                      }}
+                      >
+                      {savingTodo ? (
+                        &lt;p>Saving...&lt;/p>
+                        ) : (
+                          &lt;input
+                          autoFocus
+                          onChange={(e) => {
+                            setTodo(e.target.value);
+                          }}
+                          >&lt;/input>
+                          )}
+                          &lt;/form>
+                          &lt;/>
+                          )}
+                          &lt;/div>
+                          );
+                        }
+
+            export default App;
+          </code>
+        </pre>
+
+        <div class="lg:col-start-1 lg:row-start-3">
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://stackblitz.com/edit/vitejs-vite-7gfgue?file=src/App.tsx"
+            >Open in Stackblitz</a
+          >
+          <h4>Implicit states:</h4>
+          <pre>
+            <code class="language-tsx">
+              {!creatingNew &amp;&amp; todos.length > 0 &amp;&amp; !loadingTodos &amp;&amp; !errorMessage &amp;&amp; (
+              </code>
+            </pre>
+          <p>
+            In a larger application where variables/props/data come from
+            dispirate parts of your application, this can be a nightmare to
+            untangle and make sense of.
+          </p>
+
+          <h4>App logic spread out and split up throughout the component:</h4>
+          <p>In event handlers:</p>
+          <pre>
+              <code class="language-tsx">
+                onClick={() => {
+                  setDeletingToDo(todo);
+                  dbApi
+                  .deleteTodo(todo)
+                  .then((result) => {
+                    clearTimeout(result.timeoutId);
+                    setRefreshTodos(true);
+                    setDeletingToDo("");
+                  })
+                  .catch((reason) => {
+                    setErrorMessage(reason.message);
+                  });
+                }}
+              </code>
+            </pre>
+          <p>And useEffects (which are bug prone):</p>
+          <pre>
+            <code class="language-tsx">
+              useEffect(() => {
+                const timeOutId = setTimeout(() => {
+                  if (errorMessage) {
+                    setErrorMessage("");
+                    if (deletingToDo) {
+                      setDeletingToDo("");
+                    }
+                  }
+                }, 3000);
+                
+                return () => {
+                  clearTimeout(timeOutId);
+                };
+              }, [errorMessage]);
+            </code>
+          </pre>
+
+          <h4>Our UI is tightly coupled with our App logic.</h4>
+          <p>This hurts portability, making it hard to:</p>
+          <ul>
+            <li>
+              Move logic between apps, eg. same checkout flow in a vue and a
+              react project.
+            </li>
+            <li>Keep Web and Native projects in sync (React/React Native)</li>
+            <li>Switch UI libraries, or get rid of them alltogether :)</li>
+          </ul>
+        </div>
+
+        <h3 class="lg:col-start-2 lg:row-start-1">React + Xstate</h3>
+
+        <pre class="h-96 not-prose lg:col-start-2 lg:row-start-2">
+          <code class="language-tsx line-numbers">
+            import { useMachine } from "@xstate/react";
+            import { todosMachine } from "./todoAppMachine";
+
+            function App() {
+              const [state, send] = useMachine(todosMachine);
+              
+              return (
+                &lt;>
+                &lt;div>
+                {state.matches("Loading Todos") &amp;&amp; &lt;p>Loading...&lt;/p>}
+                
+                {state.matches("Show Todos") &amp;&amp; (
+                  &lt;>
+                  &lt;button
+                  autoFocus
+                  onClick={() => {
+                    send({ type: "Create new todo" });
+                  }}
+                  >
+                  Create New
+                  &lt;/button>
+                  &lt;ul>
+                  {state.context.todos.map((todo) => (
+                    &lt;li key={todo}>
+                    &lt;p>
+                    {todo}{" "}
+                    {state.matches("Show Todos.Deleting todo") ? (
+                      "Deleting..."
+                      ) : (
+                        &lt;button
+                        onClick={() =>
+                          send({ type: "Delete todo", value: todo })
+                        }
+                        >
+                        delete
+                        &lt;/button>
+                        )}
+                        &lt;/p>
+                        &lt;/li>
+                        ))}
+                        &lt;/ul>
+                        &lt;/>
+                        )}
+                        
+                        {(state.matches("Deleting todo errored") ||
+                        state.matches("Creating new todo.Saving todo errored")) &amp;&amp; (
+                          &lt;div>
+                          &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
+                          &lt;button
+                          onClick={() => {
+                            send({ type: "Back" });
+                          }}
+                          >
+                          Back
+                          &lt;/button>
+                          &lt;/div>
+                          )}
+                          
+                          {state.matches("Creating new todo") &amp;&amp;
+                          !state.matches("Creating new todo.Saving todo errored") &amp;&amp; (
+                            &lt;>
+                          &lt;p>Create a new todo:&lt;/p>
+                          
+                          {state.matches("Creating new todo.Saving todo") &amp;&amp; (
+                            &lt;p>Saving...&lt;/p>
+                            )}
+                            
+                            {state.matches("Creating new todo.Showing form input") &amp;&amp; (
+                              &lt;form
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                send({ type: "Submit" });
+                              }}
+                            >
+                              &lt;input
+                                autoFocus
+                                onChange={(e) => {
+                                  send({
+                                    type: "Form input changed",
+                                    value: e.target.value,
+                                  });
+                                }}
+                                >&lt;/input>
+                                &lt;/form>
+                                )}
+                                &lt;/>
+                                )}
+                  &lt;/div>
+                  &lt;/>
+                  );
+            }
+
+            export default App;
+
+          </code>
+        </pre>
+
+        <div class="lg:col-start-2 lg:row-start-3">
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://stackblitz.com/edit/vitejs-vite-teiury?file=src/App.tsx"
+            >Open in Stackblitz</a
+          >
+          <h4>Explicit states</h4>
+          <pre>
+            <code class="language-tsx">
+              {state.matches("Show Todos") && (
+              </code>
+            </pre>
+          <p>Yeah... No guessing what state our application is in.</p>
+
+          <h4>No App logic in our components, and no useEffects!</h4>
+          <pre>
+              <code class="language-tsx">
+                onClick={() =>
+                  send({ type: "Delete todo", value: todo })
+                }
+              </code>
+            </pre>
+          <p>
+            We just send an event and any relevant data to a centralized place
+            that holds and exceutes our logic.
+          </p>
+          <p>
+            Anyone thinking of Redux and reducers? :) Unfortunately, Redux only
+            tells half of the story. With Statecharts we can paint the
+            <strong>full picture:</strong>
+          </p>
+          <a href="#diagram" class="block text-3xl no-underline text-center"
+            >&#8675;</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <h2 id="diagram">App logic from React + Xstate example:</h2>
+    </div>
+    <div class="full-bleed not-prose p-4">
+      <img
+        class="w-full max-w-screen-2xl mx-auto rounded-lg"
+        src="xstate-todo.png"
+        alt="A Statecharts diagram that represents the App logic for the Todos App."
+      />
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <h3>Yes, that is the code ...<em>kind of:</em></h3>
+      <p>
+        <em>Statecharts</em> is a visual formalism for complex systems. Meaning
+        it is a formalized notation that is visual and can accurately describe
+        application logic. <em>Xstate</em> is a library that implements
+        Statecharts in Javascript/Typescript.
+        <a
+          target="_blank"
+          rel="noreferrer"
+          href="https://stately.ai/registry/new"
+          >Stately Studio</a
+        >
+        is a tool that let's you author Xstate code in a visual editor. It
+        integrates with vscode, and features bidirectional editing of
+        code/diagram:
+      </p>
+    </div>
+
+    <div class="full-bleed mb-6">
+      <video
+        class="mx-auto rounded-lg"
+        src="speedy.mp4"
+        autoplay
+        loop
+        controls
+        muted
+      ></video>
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <h3>
+        The actual <em>Xstate</em> code from our React +
+        <em>Xstate</em> example:
+      </h3>
+
+      <pre class="h-96 not-prose">
+        <code class="language-tsx line-numbers">
+          import { createMachine, assign } from "xstate";
+          import { dbApi } from "./api";
+          
+          export const todosMachine =
+          /** @xstate-layout N4IgpgJg5mDOIC5QBUD2FWwAQFkCGAxgBYCWAdmAHQAyqeE5UWaGsAxBhZeQG6oDWVFplyFSXWvUbN0mBL1QE8AFxKoyAbQAMAXW07EoAA6YSq9YZAAPRACYAnADZKtrQFYAjB4DMjgBwA7A4etgA0IACeiL62lFq23t4BAfaeAQAsIQC+WeHC2PjE5FSSDGRM+RzqVAqClPmiRRJ0ZRWysPJkfErmmroaHgZIICawZmpkljYIjgmUGfYJjgG+Wn5e4VEISR4uDumOHvYBHm4pfuk5ee2N4iUt0pVgAE7PqM+URgA2KgBm7wBbeo3Qp3GgPcoyVidboqCb6fSWUbjCzDaZuRaUM4eLQ4+zrdwBTaIDyOLSUQLpQmZRzpQLZXIgBqg4qUADKRFQAHcoZg2ABhZ5gFRgLAUHnKWSI4bI3pTElU8lnPyePwJXEePzeYkzTUuOkeKkY+LedKXRnMsSsjnc3mwSgAETAXzAqkhkowVS4tSEIKtXBtPPyjudrukHtQMMUcPUCN0SNMcrRdi05Mc3lsbjcmS0mSOfh12bcFLc3icfnsxzNZquTL9TSogbtIZdbqYEbYLzeH2+f0BwNYt2tnKD7RbYfdsijPXh-XjMsTE3lCBW3koqW8pfSmdxdMcOuSAUo3lOTniAVTiQ8tctDfZI+bJAgLrYTtbooj0uMi9RoGm62LDFHCcVw1UpbVIkQWZ0jiM0tGA-wkkOa8LXrMFBWFNsxTACVZHvblpH+Z4ASwcgjAAV2UNgADFAVIsgKOULBiDwcpIC-EYf0mZMEGOew4lcEJ7DWZC3B1Ww1XXPxpPSVIKxPLUbzQ1kMLhSFxSwCN8K5Qi6LIyi2DZciACMATMDjZSXHjDVNdcqT3Tw3HcUkdUSZxjm8Px3FNLyzkcJTBxZLhVKwjStLZPAeHDWQvRqLoBF9QL-SoELpDCvCIqiycMGnGM+j0edvzGJM-xJU0j3WFVHEcJzbG3CCtgAWjcZwjkybwtHsDrhL8Gr-NQpK71S9ScM0jLIuiz0u3eT4fmUIigVvdChTUph0owdkJuyyMFBnWM5yGIqUW40qEB8bdKC8dI3FsWxkgkolILOrN5mAisauk3yApEIKqDfCd21kLBpqFCA2AAIUIfgLK45dM2LexrsSM0EKOG6dWWNc7t8zNbFOarvoKZLxywiNgded5IDYKxYGUEVKDwX5lBeAAKDrUwASjYJbWX+0mgZB9jCs44qrNOnyKS0AJkKcMsggLJ6gn4rNhNOI4TmSfrrkG5bMLS0bwq2wGMHJ7sqZpunmYZpnWfZrQuZ54KVtCg3xqy43UFNymIBh0Xf2sEkfH4rQOruuraQ8IIdTV49cz4iT0ySO7CaHJ29ZG3CNsyybPcFsHIYIaHhcs-3phxDE4gvLNZk83r7APfjM3SE9hNus0HACHJGTIdA4EsR2wATP2ToD57YnTeGczzfEdUamzKGWfE1mEzxhNzFPfvBKRIXyIfjuXDNdmlk5kd6lJMnSHUDkrqkcTNHxbsUgafuJptd4XYflxqtd4NmaSNYSJqQs8E4jxBanjYS254jmm1i-O8b8xx8xznvEqo8vB1XXJqNU6QUhrFsNVQsXVKB0jVGWJyUsbqd2fkTeBD5gxPhdCgsWo8Ly7F-hJekQQFIY2viqVMKx7LrAcBvYmpQc7YDzkw0uUE9QnGWA4aqeJDjiWOC4C4nkki+E3O1ERQ1nb60zqgKRI9phdTYYJBwIkvBiSeo1PwLgTybgrKqTyVJbC6N1qtbChjtK6WIvRRixjlxeFTAvZUQQgjZmUU9PGa5nG5juldTw10PEqX0RnMaWcjaZKMR-fe1kyRHl8JHLqElCROHEqSWCuZTgawvCsLWdYda81DPzE2ki8moOmPg5wiEem3RavEBWWxzhYnxE5C4ARq6zFSWnLx61UCbXdjkr2oMgnWQSEeDIFZm4nhsjghuLhswt3iHVbcxwu5ZCAA */
+          createMachine(
+            {
+              context: {
+                todos: [] as string[],
+                errorMessage: undefined as string | undefined,
+                createNewTodoFormInput: "",
+                todoToDelete: "",
+              },
+              tsTypes: {} as import("./todoAppMachine.typegen").Typegen0,
+              schema: {
+                events: {} as
+                | { type: "Create new todo" }
+                | { type: "Form input changed"; value: string }
+                | { type: "Submit" }
+                | { type: "Delete todo"; value: string }
+                | { type: "Back" },
+                services: {} as {
+                  loadTodos: {
+                    data: string[];
+                  };
+                  saveTodo: {
+                    data: void;
+                  };
+                  deleteTodo: {
+                    data: void;
+                  };
+                },
+                },
+                initial: "Loading Todos",
+                states: {
+                  "Loading Todos": {
+                    invoke: {
+                      src: "loadTodos",
+                      onDone: [
+                      {
+                        target: "Show Todos",
+                        cond: "Has todos",
+                        actions: "assignTodosToContext",
+                      },
+                      {
+                        target: "Creating new todo",
+                      },
+                      ],
+                      onError: [
+                      {
+                        target: "Loading todos errored",
+                        actions: "assignErrorMessageToContext",
+                      },
+                      ],
+                    },
+                  },
+
+                  "Show Todos": {
+                    on: {
+                      "Create new todo": {
+                        target: "Creating new todo",
+                      },
+                    },
+                    
+                    states: {
+                      "Deleting todo": {
+                        invoke: {
+                          src: "deleteTodo",
+                          onDone: "#Todos Machine.Loading Todos",
+                          onError: {
+                            target: "#Todos Machine.Deleting todo errored",
+                            actions: "assignErrorMessageToContext",
+                          },
+                        },
+                      },
+                      
+                      idle: {
+                        on: {
+                          "Delete todo": {
+                            target: "Deleting todo",
+                            actions: "assignTodoToDeleteToContext",
+                          },
+                        },
+                      },
+                    },
+
+                    initial: "idle",
+                  },
+                  
+                  "Loading todos errored": {},
+                  
+                  "Creating new todo": {
+                    initial: "Showing form input",
+                    states: {
+                      "Showing form input": {
+                        on: {
+                          "Form input changed": {
+                            actions: "assignFormInputToContext",
+                          },
+                          Submit: {
+                            target: "Saving todo",
+                          },
+                        },
+                      },
+                      
+                      "Saving todo": {
+                        invoke: {
+                          src: "saveTodo",
+                          onDone: [
+                          {
+                            target: "#Todos Machine.Loading Todos",
+                          },
+                          ],
+                          onError: {
+                            target: "Saving todo errored",
+                            actions: "assignErrorMessageToContext",
+                          },
+                        },
+                      },
+                      
+                      "Saving todo errored": {
+                        after: {
+                          "3000": "Showing form input",
+                        },
+                        
+                        on: {
+                          Back: "Showing form input",
+                        },
+                      },
+                    },
+                  },
+
+                  "Deleting todo errored": {
+                    after: {
+                      "3000": {
+                        target: "#Todos Machine.Show Todos",
+                        actions: [],
+                        internal: false,
+                      },
+                    },
+                    on: {
+                      Back: {
+                        target: "Show Todos",
+                      },
+                    },
+                  },
+                },
+                id: "Todos Machine",
+              },
+              {
+                guards: {
+                  "Has todos": (context, event) => event.data.length > 0,
+                },
+                services: {
+                  loadTodos: async () => {
+                    const result = await dbApi.getTodos();
+
+                    return Array.from(result.data);
+                  },
+                  saveTodo: async (context, event) => {
+                    const result = await dbApi.addTodo(context.createNewTodoFormInput);
+                    // todos.add(context.createNewTodoFormInput);
+                  },
+                  deleteTodo: async (context, event) => {
+                    const result = await dbApi.deleteTodo(context.todoToDelete);
+                  },
+                },
+                actions: {
+                  assignTodosToContext: assign((context, event) => ({
+                    todos: event.data,
+                  })),
+                  assignErrorMessageToContext: assign((context, event) => ({
+                    errorMessage: (event.data as Error).message,
+                  })),
+                  assignFormInputToContext: assign((context, event) => ({
+                    createNewTodoFormInput: event.value,
+                  })),
+                  assignTodoToDeleteToContext: assign((context, event) => ({
+                    todoToDelete: event.value,
+                  })),
+                },
+              }
+            );
+            
+        </code>
+      </pre>
+
+      <h4>Not the prettiest thing in the world</h4>
+
+      <p>
+        Allright, so that big JS object might not be the prettiest thing in the
+        world. However it centralizes <em>app logic</em>, and completely
+        decouples it from the UI components! It might look clunky, but is
+        <em>simpler</em> than what we usually end up with on our own. With the
+        studio it is quite easy to reason about and edit as well.
+      </p>
+
+      <h3>Simulate behaviour</h3>
+      <p>
+        Another useful feature is to <em>simulate</em> how our app will respond
+        to different events, even if we hadn't written any UI for it yet:
+      </p>
+    </div>
+
+    <div class="full-bleed mb-6">
+      <video
+        class="mx-auto rounded-lg"
+        src="simulationslow.mp4"
+        autoplay
+        loop
+        controls
+        muted
+      ></video>
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <h4>Spot the bug?</h4>
+      <p>
+        We can identify undesired behaviour in our app, if we look closely at
+        the simulation video:
+      </p>
+
+      <img
+        src="bug.png"
+        class="w-full max-w-screen-2xl mx-auto rounded-lg"
+        alt="The state 'Loading todos errored' highlighted, with a single arrow pointing towards it."
+      />
+
+      <p>
+        There are no arrows (transitions) out of this state, so if our
+        <em>loadTodos</em> service errors, our app can't recover. Let's fix
+        that!
+      </p>
+      <p>First, the app logic:</p>
+
+      <img
+        src="fix.png"
+        class="w-full max-w-screen-2xl mx-auto rounded-lg"
+        alt="The state 'Loading todos errored', with a transition to the state 'Loading todos'. Red text saying: 'The fix', pointing to the transition."
+      />
+
+      <p>And then for the UI:</p>
+
+      <pre class="h-40 not-prose">
+        <code class="language-tsx">
+          {state.matches("Loading todos errored") &amp;&amp; (
+            &lt;div>
+            &lt;p style={{ color: "red" }}>{state.context.errorMessage}&lt;/p>
+            &lt;p>Hold on tight, will try again soon.&lt;/p>
+            &lt;/div>
+            )}
+          </code>
+        </pre>
+
+      <p>
+        This will make the app retry loading the todos, and the UI informs the
+        user what is going on. But it will loop forever, or until our service is
+        up again. Let's try to improve this a bit.
+      </p>
+      <p>First model/diagram:</p>
+    </div>
+
+    <div class="full-bleed mb-8">
+      <img
+        src="colorcodedfix.png"
+        class="w-full max-w-screen-lg mx-auto rounded-lg"
+        alt="A better fix that introduces an intermediate state, delays, guards and some new actions."
+      />
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <p>
+        And then code changes (not generated by the studio/diagram) in
+        <em>todosMachine.ts</em> and <em>App.tsx</em>:
+      </p>
+
+      <pre class="h-96 not-prose">
+        <code class="language-tsx">
+          // todosMachine.ts:
+          ...
+          context: {
+            ...
+            retries: 0, // we keep track of data in this context object in Xstate
+          },
+          ...
+          
+          ...
+          guards: {
+            ...
+            "not max retries": (context, event) => context.retries &lt; 5,
+          }
+          ...
+          
+          ...
+          actions: {
+            "increase retries count": assign((context, event) => ({
+              retries: (context.retries += 1),
+            })),
+            "reset retries count": assign((context, event) => ({
+              retries: 0,
+            })),
+            ...
+          }
+          ...
+
+          // App.tsx:
+          ...
+          {(state.matches("Loading Todos") ||
+          state.matches("Retry loading todos")) &amp;&amp; &lt;p>Loading...&lt;/p>} // Keep loading message if retrying
+          ...
+          
+          ...
+          {state.matches("Loading todos errored") &amp;&amp; (
+            ...
+            &lt;p>Experiencing som issues, please come back later.&lt;/p> 
+            ...
+            )} // Change text
+            ...
+          </code>
+        </pre>
+
+      <p>On the way we got excellent Typescript support from Xstate:</p>
+    </div>
+
+    <div class="full-bleed mb-8">
+      <img
+        class="w-full max-w-screen-md mx-auto rounded-lg"
+        src="typescript_support.png"
+        alt="Showing how VSCode helps with autocompleting states in App.tsx, and actions in todosMachine.ts"
+      />
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <p>Now we:</p>
+      <ul>
+        <li>Retry in the background</li>
+        <li>500 ms delay between retries</li>
+        <li>Retry maximum 4 times</li>
+        <li>
+          If service is still down, inform user and suggest they try later
+        </li>
+      </ul>
+
+      <p>
+        We could improve this further, but let's stop here for the sake of this
+        article.
+      </p>
+
+      <h3>In conclusion</h3>
+      <p>
+        I hope this small exercise has demonstrated how <em>Xstate</em> &
+        <em>Statecharts</em> can:
+      </p>
+      <ul>
+        <li>Improve understanding of a codebase</li>
+        <li><em>Facilitate</em> changes / improvements.</li>
+        <li>Simulate behaviour for a quicker feedback loop</li>
+        <li>Simplify UI components</li>
+        <li>Decouple App/Business logic from UI implementation</li>
+      </ul>
+
+      <p>I would also like to point towards other benefits:</p>
+
+      <h4>Reducing bugs</h4>
+      <p>
+        One <em>key</em> feature of State Machines / Statecharts is that our
+        application can be in <em>exactly one</em> state at any given time. And
+        that <em>one</em> state determines which "actions / signals / events"
+        our application responds to and how. This reduces bugs by:
+      </p>
+      <ul>
+        <li>Preventing "impossible / nonsensical" states</li>
+        <li>Automatically reject illegal actions</li>
+      </ul>
+
+      <h4><em>Statecharts</em> is a great collaborative tool ❤️</h4>
+      <p>
+        Designers, developers and other stakeholders can all contribute. During
+        <em>R&D</em> we can produce a <em>unique artifact</em> that draws a
+        clear path towards the end goal of producing software that solves the
+        exact problems that we aim to solve. We all speak the
+        <em>common language</em> of boxes and arrows! This <em>artifact</em> can
+        be version controlled, and live inside our codebase, driving the
+        behaviour of our application. In fact <em>all stakeholders</em> can
+        contribute to this throughout the lifefime of the software.
+      </p>
+
+      <h3>Challenges</h3>
+      <p>
+        Nothing is perfect, and there are some challenges which are good to be
+        aware of:
+      </p>
+
+      <h4>Unfamiliar way of coding</h4>
+      <p>
+        We are used to spending a <em>relatively</em> short amount of time
+        <em>planning</em> before we code. We deal with complexity later on, as
+        the codebase grows. Getting started though, is easy and lightweight.
+      </p>
+      <p>
+        Using Statecharts, it's flipped. We start out with a bunch of
+        <em>planning</em>. What is this weird cognitive load,
+        <em>before</em> writing a <em>single</em> line of code? That stuff is
+        supposed to come later. How could this be any fun!? We are
+        <em>coders</em> are we not?
+      </p>
+      <p>
+        I believe this is a normal initial reaction to the unfamiliar way of
+        working with Statecharts. I also think it passes when you experience the
+        benefits of dealing with complexity upfront, simplifying code and reduce
+        the amount of custom abstractions we have to build ourselves :)
+      </p>
+
+      <h4>Learning curve</h4>
+      <p>
+        The learning curve for Statecharts and Xstate has been pretty steep, but
+        that was before 2022. The
+        <a target="_blank" rel="noreferrer" href="https://stately.ai/"
+          >Stately Team</a
+        >
+        has done a tremendous job in flattening it. With the introduction of the
+        Stately Studio, VS Code extension, excellent Typescript support, YouTube
+        channel and last but not least, a super helpful tutorial section right
+        in the Studio:
+      </p>
+    </div>
+
+    <div class="full-bleed mb-8">
+      <img
+        class="w-full max-w-screen-xl mx-auto rounded-lg"
+        src="help_is_near.png"
+        alt="Screenshot of the Visual Editor and how clicking the blue '? icon' opens up a built-in tutorial."
+      />
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <h4>Large Machine Definitions / Diagrams</h4>
+
+      <p>
+        Xstate supports
+        <a
+          target="_blank"
+          rel="noreferrer"
+          href="https://xstate.js.org/docs/guides/actors.html#actor-api"
+          >the Actor model</a
+        >, and a machine is an actor that can send and recieve messages. This
+        makes it possible to have smaller machines / diagrams that communicate
+        with each other through messages. The Actor model is powerful, and
+        should make sense from a <em>modeling</em> consideration. Not a
+        mechanism for keeping diagrams readable. <br />
+        <em>Disclaimer:</em> I have only written a small handful of Xstate
+        machines, I might not know what I am talking about.
+      </p>
+
+      <p>So, that means diagrams can easily become quite large:</p>
+    </div>
+
+    <div class="full-bleed mb-8">
+      <img
+        class="w-full max-w-screen-lg mx-auto rounded-lg"
+        src="large_machine.png"
+        alt="Image of a large Statecharts diagram. There are a lot of arrows and boxes, impossible to read the text because it is zoomed to 27% of original size to fit the whole diagram."
+      />
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <blockquote>Wasn't the whole point to simplify things? LOL!</blockquote>
+
+      <p>
+        True, that looks complex. But it is a simplification of what we usually
+        do, let me explain with 2 arguments:
+      </p>
+      <ol>
+        <li>
+          <h4>Statecharts <em>reveal</em> complexity.</h4>
+          <p>
+            They paint a map of the inherent complexity of the problem at hand.
+            How often can we successfully, and accurately, describe how an
+            application functions, including edge cases, by looking at code?
+          </p>
+        </li>
+        <li>
+          <h4>Better than large amounts of text.</h4>
+          <p>
+            Closely related to the previous point. Reading large amounts of
+            code, top to bottom, file by file is tedious, hard and not easy to
+            get right. Zooming, scrolling and following arrows is still an
+            improvement for understanding application logic.
+          </p>
+        </li>
+      </ol>
+
+      <p>
+        And last but not least regarding large machines: The Stately Team is
+        making improvements each day, and they are exploring ideas, like
+        <a
+          target="_blank"
+          rel="noreferrer"
+          href="https://statelyai.canny.io/editor/p/nested-folding"
+          >collapsable states / areas</a
+        >, from their open feedback &#10141; roadmap thingy:
+      </p>
+    </div>
+
+    <div class="full-bleed mb-8">
+      <img
+        class="w-full max-w-screen-xl mx-auto rounded-lg"
+        src="collapsable_states.png"
+        alt="2 images of the same Statechart side by side, showing some states collapsed and uncollapsed."
+      />
+    </div>
+
+    <div
+      class="font-serif prose-headings:font-sans prose prose-neutral dark:prose-invert lg:prose-lg pb-8"
+    >
+      <p>I'm confident they will cook up something great for this!</p>
+
+      <h3>Next moves</h3>
+      <p>
+        I hope this article has peaked your interest for Statecharts! And that
+        you would like to incorporate them into your next software endeavour!
+        Xstate is <em>framework agnostic</em>, and runs anywhere Javascript
+        runs. Backend / Frontend / Embedded Systems, all can benefit!
+      </p>
+      <p>Statecharts also enables new possibilities like:</p>
+      <ul>
+        <li>
+          Hook into transitions for analytics and unique insight into
+          <em>how</em> users use the app.
+        </li>
+        <li>
+          Automatically generate end to end tests:
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://xstate.js.org/docs/packages/xstate-test/#quick-start"
+            >@xstate/test</a
+          >
+        </li>
+        <li>
+          Future: Diagram to functioning app:
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://youtu.be/-uoEro1jsBI?t=1053"
+            >Demo (YouTube)</a
+          >
+        </li>
+        <li>and a lot more!</li>
+      </ul>
+      <p>
+        I would encourage you to watch
+        <a
+          target="_blank"
+          rel="noreferrer"
+          href="https://www.youtube.com/watch?v=_B7n995Nnj0"
+          >this excellent talk</a
+        >
+        by
+        <a
+          target="_blank"
+          rel="noreferrer"
+          href="https://twitter.com/DavidKPiano"
+          >David Khourshid</a
+        >, creator of
+        <a target="_blank" rel="noreferrer" href="https://xstate.js.org/docs/"
+          >Xstate</a
+        >
+        and founder of
+        <a target="_blank" rel="noreferrer" href="https://stately.ai/"
+          >Stately</a
+        >.
+      </p>
+
+      <h4>Useful Resources</h4>
+      <ul>
+        <li>
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://www.youtube.com/watch?v=_5dAlGaqhck&list=PLvWgkXBB3dd4ocSi17y1JmMmz7S5cV8vI"
+            >Beginner React + Xstate tutorial</a
+          >
+          on YouTube is a nice place to start. My example is based off of this.
+        </li>
+        <li>
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://stately.ai/blog/modelling-101-how-to-build-a-statechart-from-scratch"
+            >Modelling 101</a
+          >
+          from the Stately Blog
+        </li>
+        <li>
+          Of course
+          <a target="_blank" rel="noreferrer" href="https://xstate.js.org/docs/"
+            >the Xstate docs</a
+          >
+          and
+          <a target="_blank" rel="noreferrer" href="https://stately.ai/"
+            >the Stately website</a
+          >
+        </li>
+        <li>
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://www.youtube.com/@Statelyai"
+            >Stately on YouTube</a
+          >
+        </li>
+        <li>
+          <h5>Frontend Masters Courses (requires membership, 39$ monthly)</h5>
+          <p>
+            These predate the Visual Editor + Typescript support, so the DX is
+            not super top notch yet, but they are a great way to learn about the
+            concepts of Statecharts, and get hands on practice solving problems
+            with Xstate code.
+          </p>
+          <ul>
+            <li>
+              <a
+                target="_blank"
+                rel="noreferrer"
+                href="https://frontendmasters.com/courses/xstate-v2/"
+                >State Machines in JavaScript with Xstate, v2</a
+              >
+            </li>
+            <li>
+              <a
+                target="_blank"
+                rel="noreferrer"
+                href="https://frontendmasters.com/courses/xstate-react/"
+                >State Modeling in React with Xstate</a
+              >
+            </li>
+          </ul>
+        </li>
+      </ul>
+
+      <h3>Some definitions:</h3>
+      <p>
+        I have not defined some of the terms I use in this article, and while
+        not getting too extensive here is an overview:
+      </p>
+      <h4>(Finite) State Machines (FSM)</h4>
+      <p>
+        A model of computation, developed in the 1940/50s I believe. Consists of
+        5 things:
+      </p>
+      <ol>
+        <li>An initial state</li>
+        <li>A finite number of states</li>
+        <li>Transitions between those states</li>
+        <li>A final state</li>
+      </ol>
+
+      <h4>Statecharts</h4>
+      <p>
+        Invented by David Harel in early 1980s. Statecharts are essentially
+        finite statemachines, but with a notation that makes them manageable and
+        scalable.
+      </p>
+      <ul>
+        <li>
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://www.inf.ed.ac.uk/teaching/courses/seoc/2005_2006/resources/statecharts.pdf"
+            >Original paper by David Harel</a
+          >
+        </li>
+        <li>They are a part of UML</li>
+        <ul>
+          <li>
+            <a
+              target="_blank"
+              rel="noreferrer"
+              href="https://www.omg.org/spec/UML/2.5.1/PDF"
+              >UML spec</a
+            >
+          </li>
+          <li>
+            <a
+              target="_blank"
+              rel="noreferrer"
+              href="https://en.wikipedia.org/wiki/UML_state_machine"
+              >Wikipedia page</a
+            >
+          </li>
+        </ul>
+        <li>State Chart XML (SCXML)</li>
+        <ul>
+          <li>
+            <a
+              target="_blank"
+              rel="noreferrer"
+              href="https://www.w3.org/TR/scxml/"
+              >W3C standard</a
+            >
+          </li>
+          <li>
+            Xstate's Statechart implementation is modeled closely to this
+            standard
+          </li>
+        </ul>
+      </ul>
+
+      <h4>
+        <a target="_blank" rel="noreferrer" href="https://xstate.js.org/docs/"
+          >Xstate</a
+        >
+      </h4>
+      <p>
+        An implementation of Statecharts & the Actor model in JavaScript /
+        Typescript
+      </p>
+
+      <h4>
+        <a target="_blank" rel="noreferrer" href="https://stately.ai/"
+          >Stately</a
+        >
+      </h4>
+      <p>The company behind Xstate, it's visual editor and online tools.</p>
+    </div>
+
+    <script type="module" crossorigin src="/statecharts-article/reacttodobuild.js"></script>
+    <script type="module" src="/statecharts-article/prism.js"></script>
+  </body>
+</html>
